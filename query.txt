@@ -1,0 +1,77 @@
+display data: shows specified gpu and local drive only
+
+SELECT
+    cpu.timestamp,
+
+    cpu.usage_percent AS cpu_usage_percent,
+
+    ram.total_mb AS ram_total_mb,
+    ram.used_mb AS ram_used_mb,
+    ram.percent_used AS ram_percent_used,
+
+    disk.read_mb_per_sec AS disk_read_mb_per_sec,
+    disk.write_mb_per_sec AS disk_write_mb_per_sec,
+
+    gpu.temperature_c AS gpu_temp_c,
+    gpu.temperature_f AS gpu_temp_f,
+    gpu.usage_percent AS gpu_usage_percent,
+    gpu.memory_used_mb AS gpu_memory_used_mb,
+    gpu.memory_total_mb AS gpu_memory_total_mb,
+    gpu.memory_usage_percent AS gpu_memory_usage_percent
+
+FROM cpu
+JOIN ram ON cpu.timestamp = ram.timestamp
+
+LEFT JOIN disk
+    ON cpu.timestamp = disk.timestamp
+    AND disk.disk_name = 'PhysicalDrive0'
+
+LEFT JOIN gpu
+    ON cpu.timestamp = gpu.timestamp
+    AND gpu.name = 'NVIDIA GeForce RTX 5070 Ti Laptop GPU'
+
+ORDER BY cpu.timestamp DESC;
+
+
+
+display all data:
+
+SELECT
+    cpu.timestamp,
+
+    cpu.usage_percent AS cpu_usage_percent,
+
+    ram.total_mb AS ram_total_mb,
+    ram.used_mb AS ram_used_mb,
+    ram.percent_used AS ram_percent_used,
+
+    disk.disk_name AS disk_name,
+    disk.read_mb_per_sec AS disk_read_mb_per_sec,
+    disk.write_mb_per_sec AS disk_write_mb_per_sec,
+
+    gpu.name AS gpu_name,
+    gpu.temperature_c AS gpu_temp_c,
+    gpu.temperature_f AS gpu_temp_f,
+    gpu.usage_percent AS gpu_usage_percent,
+    gpu.memory_used_mb AS gpu_memory_used_mb,
+    gpu.memory_total_mb AS gpu_memory_total_mb,
+    gpu.memory_usage_percent AS gpu_memory_usage_percent
+
+FROM cpu
+JOIN ram ON cpu.timestamp = ram.timestamp
+
+LEFT JOIN disk
+    ON cpu.timestamp = disk.timestamp
+    AND disk.disk_name = (
+        SELECT disk_name FROM disk d2
+        WHERE d2.timestamp = cpu.timestamp
+        ORDER BY disk_name
+        LIMIT 1
+    )
+
+LEFT JOIN gpu
+    ON cpu.timestamp = gpu.timestamp
+    AND gpu.gpu_index = 0
+
+ORDER BY cpu.timestamp DESC;
+
